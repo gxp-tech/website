@@ -45,6 +45,9 @@ jobs:
           ruby-version: 3.3
           bundler-cache: true
 
+      - name: Auto-inject front matter
+        run: python3 tools/auto_frontmatter.py _posts
+
       - name: Build site
         run: bundle exec jekyll b -d "_site${{ steps.pages.outputs.base_path }}"
         env:
