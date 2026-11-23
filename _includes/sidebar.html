@@ -48,13 +48,21 @@
 
       <ul class="dropdown-menu d-none" aria-hidden="true"></ul>
       <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        (function () {
+          var KEY = 'theme-mode';
+          var saved = localStorage.getItem(KEY);
+          var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var current = saved || (systemDark ? 'dark' : 'light');
+          document.documentElement.setAttribute('data-mode', current);
+
           var btn = document.getElementById('mode-toggle');
           if (!btn) return;
           btn.addEventListener('click', function () {
-            Theme.update(Theme.isDark ? Theme.Mode.LIGHT : Theme.Mode.DARK);
+            var next = document.documentElement.getAttribute('data-mode') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-mode', next);
+            localStorage.setItem(KEY, next);
           });
-        });
+        })();
       </script>
 
       {% if site.data.contact.size > 0 %}
