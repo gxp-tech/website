@@ -50,16 +50,25 @@
       <script>
         (function () {
           var KEY = 'theme-mode';
-          var saved = localStorage.getItem(KEY);
-          var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          var current = saved || (systemDark ? 'dark' : 'light');
-          document.documentElement.setAttribute('data-mode', current);
+          var root = document.documentElement;
+          var mq = window.matchMedia('(prefers-color-scheme: dark)');
+
+          function systemMode() { return mq.matches ? 'dark' : 'light'; }
+          function apply(mode) { root.setAttribute('data-mode', mode); }
+
+          apply(localStorage.getItem(KEY) || systemMode());
+
+          function onSystemChange() {
+            if (!localStorage.getItem(KEY)) apply(systemMode());
+          }
+          if (mq.addEventListener) mq.addEventListener('change', onSystemChange);
+          else if (mq.addListener) mq.addListener(onSystemChange);
 
           var btn = document.getElementById('mode-toggle');
           if (!btn) return;
           btn.addEventListener('click', function () {
-            var next = document.documentElement.getAttribute('data-mode') === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-mode', next);
+            var next = root.getAttribute('data-mode') === 'dark' ? 'light' : 'dark';
+            apply(next);
             localStorage.setItem(KEY, next);
           });
         })();
