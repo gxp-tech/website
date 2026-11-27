@@ -43,25 +43,8 @@
   <div class="sidebar-bottom d-flex flex-wrap  align-items-center w-100">
     {% unless site.theme_mode %}
       <button type="button" class="btn btn-link nav-link" aria-label="切换深浅色" id="mode-toggle">
-        <i class="fas fa-sun" data-mode-icon="light" aria-hidden="true"></i>
-        <i class="fas fa-moon" data-mode-icon="dark" aria-hidden="true"></i>
+        <i class="fas fa-adjust" aria-hidden="true"></i>
       </button>
-
-      <style>
-        #mode-toggle [data-mode-icon] { display: none; }
-
-        /* 手动指定过就按指定的显示 */
-        html[data-mode='light'] #mode-toggle [data-mode-icon='light'],
-        html[data-mode='dark'] #mode-toggle [data-mode-icon='dark'] { display: inline-block; }
-
-        /* 没有手动指定 → 跟随系统，图标也要跟着系统走 */
-        @media (prefers-color-scheme: light) {
-          html:not([data-mode]) #mode-toggle [data-mode-icon='light'] { display: inline-block; }
-        }
-        @media (prefers-color-scheme: dark) {
-          html:not([data-mode]) #mode-toggle [data-mode-icon='dark'] { display: inline-block; }
-        }
-      </style>
 
       <script>
         (function () {
