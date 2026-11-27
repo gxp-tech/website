@@ -49,17 +49,35 @@
       <ul class="dropdown-menu d-none" aria-hidden="true"></ul>
       <script>
         (function () {
-          var KEY = 'theme-mode';
+          var KEY = 'theme'; // 与 Chirpy 原生脚本共用同一个 key，避免两套状态打架
+          var MODES = ['system', 'light', 'dark'];
           var root = document.documentElement;
           var mq = window.matchMedia('(prefers-color-scheme: dark)');
 
-          function systemMode() { return mq.matches ? 'dark' : 'light'; }
-          function apply(mode) { root.setAttribute('data-mode', mode); }
+          function resolved(mode) {
+            return mode === 'system' ? (mq.matches ? 'dark' : 'light') : mode;
+          }
 
-          apply(localStorage.getItem(KEY) || systemMode());
+          function current() {
+            var saved = localStorage.getItem(KEY);
+            return MODES.indexOf(saved) !== -1 ? saved : 'system';
+          }
+
+          function apply(mode) {
+            var value = resolved(mode);
+            if (mode === 'system') {
+              root.removeAttribute('data-mode'); // 关键：让 CSS 的 :not([data-mode]) 接管，真正跟随系统
+            } else {
+              root.setAttribute('data-mode', value);
+            }
+            root.setAttribute('data-bs-theme', value); // 同步给 Chirpy 原生脚本与组件
+            root.toggleAttribute('data-theme-persisted', mode !== 'system');
+          }
+
+          apply(current());
 
           function onSystemChange() {
-            if (!localStorage.getItem(KEY)) apply(systemMode());
+            if (current() === 'system') apply('system');
           }
           if (mq.addEventListener) mq.addEventListener('change', onSystemChange);
           else if (mq.addListener) mq.addListener(onSystemChange);
@@ -67,9 +85,10 @@
           var btn = document.getElementById('mode-toggle');
           if (!btn) return;
           btn.addEventListener('click', function () {
-            var next = root.getAttribute('data-mode') === 'dark' ? 'light' : 'dark';
+            var next = MODES[(MODES.indexOf(current()) + 1) % MODES.length];
+            if (next === 'system') localStorage.removeItem(KEY);
+            else localStorage.setItem(KEY, next);
             apply(next);
-            localStorage.setItem(KEY, next);
           });
         })();
       </script>
