@@ -894,8 +894,11 @@ const chosen = KNOWN.includes(pick) ? pick : "dragonfly";
 /* this script is a module, so its consts are not visible to the loaded classic
    script - the registry has to hang off window */
 const FIGURES = (window.__HL_FIGURES__ = {});
+/* body hash per figure, so a fixed figure arrives even when the CDN's ten-minute
+   cache still holds the old script */
+const VER = {"whale":"0e97c8fb","dandelion":"60638ba7","airplane":"a760f7f7","dragonfly":"638f0463","bianzhong":"fc2b6db9","drums":"742bc824","piano":"7b23449c","puzzle-cube":"f79011fd"};
 const boot = document.createElement("script");
-boot.src = "figures/" + chosen + ".js";
+boot.src = "figures/" + chosen + ".js?v=" + (VER[chosen] || "0");
 boot.onerror = () => {
   const e = document.getElementById("error");
   if (e) { e.textContent = "figure failed to load: " + chosen; e.hidden = false; }
