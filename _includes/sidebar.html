@@ -42,75 +42,71 @@
 
   <div class="sidebar-bottom d-flex flex-wrap  align-items-center w-100">
     {% unless site.theme_mode %}
-      <button type="button" class="btn btn-link nav-link" aria-label="Theme: system" id="mode-toggle">
-        <i class="fas fa-moon" data-mode-icon="dark" aria-hidden="true"></i>
+      <button type="button" class="btn btn-link nav-link" aria-label="切换深浅色" id="mode-toggle">
         <i class="fas fa-sun" data-mode-icon="light" aria-hidden="true"></i>
-        <span class="mode-icon-auto" data-mode-icon="system">
-          <i class="fas fa-adjust" aria-hidden="true"></i>
-          <span class="mode-auto-mark" aria-hidden="true">A</span>
-        </span>
+        <i class="fas fa-moon" data-mode-icon="dark" aria-hidden="true"></i>
       </button>
 
       <style>
         #mode-toggle [data-mode-icon] { display: none; }
+
+        /* 手动指定过就按指定的显示 */
+        html[data-mode='light'] #mode-toggle [data-mode-icon='light'],
         html[data-mode='dark'] #mode-toggle [data-mode-icon='dark'] { display: inline-block; }
-        html[data-mode='light'] #mode-toggle [data-mode-icon='light'] { display: inline-block; }
-        html:not([data-mode]) #mode-toggle [data-mode-icon='system'] { display: inline-block; }
-        #mode-toggle .mode-icon-auto { position: relative; line-height: 1; }
-        #mode-toggle .mode-auto-mark {
-          position: absolute;
-          right: -0.55em;
-          bottom: -0.2em;
-          font-size: 0.58em;
-          font-weight: 500;
-          line-height: 1;
-          letter-spacing: 0;
+
+        /* 没有手动指定 → 跟随系统，图标也要跟着系统走 */
+        @media (prefers-color-scheme: light) {
+          html:not([data-mode]) #mode-toggle [data-mode-icon='light'] { display: inline-block; }
+        }
+        @media (prefers-color-scheme: dark) {
+          html:not([data-mode]) #mode-toggle [data-mode-icon='dark'] { display: inline-block; }
         }
       </style>
 
       <script>
         (function () {
           var KEY = 'theme'; // 与 Chirpy 原生脚本共用同一个 key，避免两套状态打架
-          var ORDER = ['dark', 'light', 'system']; // 点击顺序：深 → 浅 → 自动
           var root = document.documentElement;
           var mq = window.matchMedia('(prefers-color-scheme: dark)');
           var btn = document.getElementById('mode-toggle');
 
-          function resolved(mode) {
-            return mode === 'system' ? (mq.matches ? 'dark' : 'light') : mode;
+          // 只有 light / dark 算手动指定；其余（null、'system'、脏值）一律视为跟随系统
+          function saved() {
+            var v = localStorage.getItem(KEY);
+            return v === 'light' || v === 'dark' ? v : null;
           }
 
-          function current() {
-            var saved = localStorage.getItem(KEY);
-            return ORDER.indexOf(saved) !== -1 ? saved : 'system';
+          // 当前实际呈现的模式：手动优先，否则看系统
+          function shown() {
+            var s = saved();
+            return s || (mq.matches ? 'dark' : 'light');
           }
 
-          function apply(mode) {
-            var value = resolved(mode);
-            if (mode === 'system') {
-              root.removeAttribute('data-mode'); // 关键：让 CSS 的 :not([data-mode]) 接管，真正跟随系统
+          function apply() {
+            var s = saved();
+            if (s) {
+              root.setAttribute('data-mode', s);
             } else {
-              root.setAttribute('data-mode', value);
+              root.removeAttribute('data-mode'); // 交给 CSS 的 :not([data-mode]) + @media 跟随系统
             }
-            root.setAttribute('data-bs-theme', value); // 同步给 Chirpy 原生脚本与组件
-            root.toggleAttribute('data-theme-persisted', mode !== 'system');
-            if (btn) btn.setAttribute('aria-label', 'Theme: ' + mode);
+            root.setAttribute('data-bs-theme', s || (mq.matches ? 'dark' : 'light'));
+            if (btn) btn.setAttribute('aria-label', shown() === 'dark' ? '切换到浅色' : '切换到深色');
           }
 
-          apply(current());
+          apply();
 
+          // 跟随系统时，系统切换要实时生效
           function onSystemChange() {
-            if (current() === 'system') apply('system');
+            if (!saved()) apply();
           }
           if (mq.addEventListener) mq.addEventListener('change', onSystemChange);
           else if (mq.addListener) mq.addListener(onSystemChange);
 
           if (!btn) return;
           btn.addEventListener('click', function () {
-            var next = ORDER[(ORDER.indexOf(current()) + 1) % ORDER.length];
-            if (next === 'system') localStorage.removeItem(KEY);
-            else localStorage.setItem(KEY, next);
-            apply(next);
+            // 按“当前看到的颜色”取反，保证每次点击都有可见变化
+            localStorage.setItem(KEY, shown() === 'dark' ? 'light' : 'dark');
+            apply();
           });
         })();
       </script>
