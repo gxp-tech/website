@@ -1021,9 +1021,10 @@ function mount({ stage, svg, read }, value) {
   svg.style.setProperty("--hl-sw", ".6");
   const gBody = mk("g", {}, svg), gFar = mk("g", {}, svg), gNear = mk("g", {}, svg);
   /* the blowhole spout: drawn last so it rides over the back, pointer-events none so it
-     never steals the drag.  Filled with the ink tone so it reads as water in both themes. */
+     never steals the drag.  Outlined in the ink tone rather than filled, so each bead is a
+     hollow ring that reads as water against either ground. */
   const spoutG = mk("g", { style: "pointer-events:none" }, svg);
-  const spoutEl = mk("path", { style: "fill:var(--ink);stroke:none;opacity:.82" }, spoutG);
+  const spoutEl = mk("path", { style: "fill:none;stroke:var(--ink);stroke-width:.55;opacity:.9" }, spoutG);
   /* the two blowhole slits: each line on the crown opens, on a press, into its own oval
      hole that swallows the line; releasing closes it and the line is there again.  Drawn
      as paths because the oval has to lie on the lofted skin, not on the page. */
@@ -5094,8 +5095,8 @@ function mount({ stage, svg, read }, value) {
      fall and dissipate.  The blowhole sits at station 200 on the dorsal midline, where
      the two traced slits are; its screen spot is read each frame after draw().  Droplets
      are simple ballistic points with a little spread and gravity, drawn as one compound
-     path so they stay a single hairline-weight fill.  `blowing` is set by the pointer;
-     the drag that turns the whale is never blocked by it. */
+     path of hollow rings so they stay a single hairline-weight stroke.  `blowing` is set by
+     the pointer; the drag that turns the whale is never blocked by it. */
   let blowing = false;
   let blowUntil = 0;                      /* the holes stay open at least this long after a tap */
   const droplets = [];
@@ -5219,8 +5220,9 @@ function mount({ stage, svg, read }, value) {
       if (d.life <= 0) continue;
       alive++;
       lifeSum += d.life;
-      const r = d.r * Math.max(d.life, .15);
-      /* a filled circle per droplet, packed into one path */
+      const r = d.r * Math.max(d.life, .28);
+      /* one hollow ring per droplet, packed into a single stroked path; the arc pair
+         closes on itself, so a bead is an outline with no fill under it */
       s += `M${(d.x - r).toFixed(1)},${d.y.toFixed(1)}a${r.toFixed(2)},${r.toFixed(2)} 0 1,1 ${(r * 2).toFixed(2)},0a${r.toFixed(2)},${r.toFixed(2)} 0 1,1 ${(-r * 2).toFixed(2)},0`;
     }
     if (alive) {
