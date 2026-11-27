@@ -5285,11 +5285,6 @@ function mount({ stage, svg, read }, value) {
     stage.removeEventListener("pointerup", stopBlow);
     stage.removeEventListener("pointercancel", stopBlow);
   });
-  /* TEMP DIAG: plan view, hold the press so both nares show open */
-  setTimeout(() => {
-    const r = stage.getBoundingClientRect();
-    stage.dispatchEvent(new PointerEvent("pointerdown", { clientX: r.left + 200 / 400 * r.width, clientY: r.top + 160 / 320 * r.height, button: 0, buttons: 1, pointerType: "mouse", bubbles: true }));
-  }, 500);
   C.k = clamp(k.x, -1, 1); C.az = rad(az.x); spreadPx = SPREAD * (value == null ? 1 : value); draw();
   return { set(v) { spreadPx = SPREAD * v; last = ""; draw(); }, destroy: bag.dispose };
 }
