@@ -896,7 +896,7 @@ const chosen = KNOWN.includes(pick) ? pick : "dragonfly";
 const FIGURES = (window.__HL_FIGURES__ = {});
 /* body hash per figure, so a fixed figure arrives even when the CDN's ten-minute
    cache still holds the old script */
-const VER = {"whale":"61caf2c7","dandelion":"60638ba7","airplane":"a760f7f7","dragonfly":"638f0463","bianzhong":"fc2b6db9","drums":"742bc824","piano":"7b23449c","puzzle-cube":"f79011fd"};
+const VER = {"whale":"f3345f9e","dandelion":"60638ba7","airplane":"a760f7f7","dragonfly":"638f0463","bianzhong":"fc2b6db9","drums":"742bc824","piano":"7b23449c","puzzle-cube":"f79011fd"};
 const boot = document.createElement("script");
 boot.src = "figures/" + chosen + ".js?v=" + (VER[chosen] || "0");
 boot.onerror = () => {

@@ -1546,6 +1546,27 @@ function mount({ stage, svg, read }, value) {
     const sk = gridCell(x, y);
     return sk !== null && dd > sk + tol;
   };
+  /* The same question asked of a bead of water, which is not a stroke lying on the animal
+     and cannot claim the outline's exemption.  Two things are different for a bead.
+     First, the frame's edge must not excuse it: edgeMask exists so a stroke ON the
+     silhouette is never called behind the animal, but a bead near that line is body or
+     air on its own merits, and exempting the whole rim put a fringe of beads along the
+     back at every quarter turn.
+     Second, the grid is read as "is any skin in this cell NEARER than the bead" - and near
+     the rim a cell may hold no sample at all, or the cell's own sample may BE the rim the
+     bead is level with.  Inside the animal's outline the answer is then "covered": water
+     that has drifted inside the silhouette one cell from the edge and cannot prove it is
+     in front of the skin is behind the animal, and printing it is the leak.  Outside the
+     outline nothing can be in front, which the polygon settles without a depth at all. */
+  const beadBehind = (x, y, dd, tol = 2.2) => {
+    if (bodyRing && !inPoly(bodyRing, x, y)) return false;   /* in open air: always shown */
+    const sk = gridCell(x, y);
+    if (sk === null) {
+      const nb = gridAt(x, y);
+      return nb > 1e8 ? true : dd > nb + tol;
+    }
+    return dd > sk + tol;
+  };
   /* The depth test, applied to a whole stroke at once.  Asked point by point it takes a
      lone sample out - where the surface turns steeply the grid's nearest sample can be a
      shade nearer than the point itself - and a lone sample taken out of a line prints as
@@ -5162,15 +5183,22 @@ function mount({ stage, svg, read }, value) {
     }
     return out + "Z";
   };
-  const spawnDroplet = (bx, by, bz) => {
+  /* A bead is seeded with its offset from the blowhole, not with a spot on the page: the
+     plume is a column of water standing on the blowhole, so it travels with the blowhole
+     when the animal is turned, and the depth it must be judged at is the blowhole's own
+     depth at that moment - not the depth the hole happened to have when the bead was
+     born.  Carried as absolute page coordinates, a plume born at the plan view kept the
+     plan view's depth for as long as it lived, and rolling the animal over under it drew
+     the whole column across the belly: the beads had been nearer than any skin then, and
+     nothing could ever be found in front of them again. */
+  const spawnDroplet = (bx, by) => {
     const a = (Math.random() - .5) * .9;  /* spread angle, mostly straight up */
     const sp = 40 + Math.random() * 55;   /* initial speed */
     const r = .8 + Math.random() * 1.6;
     droplets.push({
-      x: bx + (Math.random() - .5) * 3,
-      y: by - 1,
-      z: bz,                                /* the blowhole's own depth: a bead is hidden
-                                               wherever the body stands in front of it */
+      ox: (Math.random() - .5) * 3,         /* offset from the blowhole, page units */
+      oy: -1,
+      x: bx, y: by,
       vx: Math.sin(a) * sp,
       vy: -Math.cos(a) * sp - 10,           /* extra upward kick */
       life: 1,
@@ -5212,20 +5240,26 @@ function mount({ stage, svg, read }, value) {
          the drawn slit without the hand-off showing */
       nostrils[i].style.opacity = crownOn ? String(Math.min(1, grow * 6)) : "0";
     }
-    if (blowing) for (let i = 0; i < SPAWN; i++) spawnDroplet(bh[0], bh[1], dep(spoutP3));
+    if (blowing) for (let i = 0; i < SPAWN; i++) spawnDroplet(bh[0], bh[1]);
+    /* the depth the whole column stands at: the blowhole's, read again every frame */
+    const bhZ = dep(spoutP3);
     let s = "", alive = 0, lifeSum = 0;
     for (const d of droplets) {
       d.vy += GRAV * dt;
-      d.x += d.vx * dt;
-      d.y += d.vy * dt;
+      d.ox += d.vx * dt;
+      d.oy += d.vy * dt;
       d.life -= dt / d.maxLife;
       if (d.life <= 0) continue;
-      /* the plume is water held on the body's mid-line, so wherever the animal's own skin
-         stands in front of that depth the bead is behind it and must not print: in the
+      /* the plume rides the blowhole: the same offset from the hole it was born with,
+         carried by wherever the hole is now */
+      d.x = bh[0] + d.ox;
+      d.y = bh[1] + d.oy;
+      /* the plume is water standing on the body's mid-line, so wherever the animal's own
+         skin is nearer than that plane the bead is behind it and must not print: in the
          belly view the blowhole has rolled to the far side and the whole spout goes with
          it, instead of showing through the underside.  A culled bead keeps falling
          (it is only not drawn), so it comes back out at the far edge of the silhouette. */
-      if (skinnedOver(d.x, d.y, d.z)) continue;
+      if (beadBehind(d.x, d.y, bhZ)) continue;
       alive++;
       lifeSum += d.life;
       const r = d.r * Math.max(d.life, .28);
@@ -5266,10 +5300,9 @@ function mount({ stage, svg, read }, value) {
          animal while the plume keeps going.  A tap seeds its own puff, so the very
          first frame already shows water. */
       const bh = blowholeXY();
-      const bhZ = dep(spoutP3);
       blowing = true;
       blowUntil = performance.now() + 280;
-      for (let i = 0; i < 16; i++) spawnDroplet(bh[0], bh[1], bhZ);
+      for (let i = 0; i < 16; i++) spawnDroplet(bh[0], bh[1]);
       if (event) { try { stage.setPointerCapture?.(event.pointerId); } catch {} }
       loop.wake();
     },
