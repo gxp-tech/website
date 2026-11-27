@@ -1930,7 +1930,7 @@ function mount({ stage, svg, read }, value) {
     return o;
   };
 
-  const C = Cam(32, .45, .92), VD = [0, 0, 1], p3 = [0, 0, 0], n3 = [0, 0, 0];
+  const C = Cam(20, 0, .92), VD = [0, 0, 1], p3 = [0, 0, 0], n3 = [0, 0, 0];
   const box = [];
   for (let i = 0; i < 24; i++) for (let j = 0; j < 12; j++) {
     surf(xa + (XE - xa) * i / 23, j / 12 * Math.PI * 2, p3);
@@ -6036,10 +6036,11 @@ function mount({ stage, svg, read }, value) {
      from the plan view through the side to the belly and back.  Both feed the springs' own
      targets, and neither answers the pointer until a hand is down - hovering leaves the
      view exactly where it rests, and the blades beat instead. */
-  /* The rest pose is the three-quarter view the frame was fitted for: the plate reads
-     as a body with a back and a flank, not as the flat plan it used to open on. The
-     hand still rolls it all the way to the plan (k = 1) and over to the belly. */
-  const k = spring(.45), az = spring(32);
+  /* The rest pose is the side view, swung twenty degrees off square (head at 340):
+     the profile on the plate reads as the drawing it was traced from, with just
+     enough turn to show the body has depth. The hand still rolls it to the plan
+     (k = 1) and over to the belly. */
+  const k = spring(0), az = spring(20);
   const YAW = .9, ROLL = .0045;              /* degrees per px sideways, k per px up and down */
   let drag = null;
   /* The blades' beat, laid over the same frame loop.  `beat` is not an angle but an
