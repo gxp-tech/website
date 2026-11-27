@@ -5162,13 +5162,15 @@ function mount({ stage, svg, read }, value) {
     }
     return out + "Z";
   };
-  const spawnDroplet = (bx, by) => {
+  const spawnDroplet = (bx, by, bz) => {
     const a = (Math.random() - .5) * .9;  /* spread angle, mostly straight up */
     const sp = 40 + Math.random() * 55;   /* initial speed */
     const r = .8 + Math.random() * 1.6;
     droplets.push({
       x: bx + (Math.random() - .5) * 3,
       y: by - 1,
+      z: bz,                                /* the blowhole's own depth: a bead is hidden
+                                               wherever the body stands in front of it */
       vx: Math.sin(a) * sp,
       vy: -Math.cos(a) * sp - 10,           /* extra upward kick */
       life: 1,
@@ -5210,7 +5212,7 @@ function mount({ stage, svg, read }, value) {
          the drawn slit without the hand-off showing */
       nostrils[i].style.opacity = crownOn ? String(Math.min(1, grow * 6)) : "0";
     }
-    if (blowing) for (let i = 0; i < SPAWN; i++) spawnDroplet(bh[0], bh[1]);
+    if (blowing) for (let i = 0; i < SPAWN; i++) spawnDroplet(bh[0], bh[1], dep(spoutP3));
     let s = "", alive = 0, lifeSum = 0;
     for (const d of droplets) {
       d.vy += GRAV * dt;
@@ -5218,6 +5220,12 @@ function mount({ stage, svg, read }, value) {
       d.y += d.vy * dt;
       d.life -= dt / d.maxLife;
       if (d.life <= 0) continue;
+      /* the plume is water held on the body's mid-line, so wherever the animal's own skin
+         stands in front of that depth the bead is behind it and must not print: in the
+         belly view the blowhole has rolled to the far side and the whole spout goes with
+         it, instead of showing through the underside.  A culled bead keeps falling
+         (it is only not drawn), so it comes back out at the far edge of the silhouette. */
+      if (skinnedOver(d.x, d.y, d.z)) continue;
       alive++;
       lifeSum += d.life;
       const r = d.r * Math.max(d.life, .28);
@@ -5258,9 +5266,10 @@ function mount({ stage, svg, read }, value) {
          animal while the plume keeps going.  A tap seeds its own puff, so the very
          first frame already shows water. */
       const bh = blowholeXY();
+      const bhZ = dep(spoutP3);
       blowing = true;
       blowUntil = performance.now() + 280;
-      for (let i = 0; i < 16; i++) spawnDroplet(bh[0], bh[1]);
+      for (let i = 0; i < 16; i++) spawnDroplet(bh[0], bh[1], bhZ);
       if (event) { try { stage.setPointerCapture?.(event.pointerId); } catch {} }
       loop.wake();
     },
